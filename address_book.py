@@ -1,3 +1,9 @@
+import sys
+import os
+import pickle
+import openpyxl
+from openpyxl.styles import Alignment
+
 class Person:
 
     id = 0
@@ -10,6 +16,49 @@ class Person:
         self.address = address
         self.phone = phone
 
+
+def hello_message():
+    
+    print('''
+    Вас приветствует AdBook - портативная адрессная книга.
+    Рекомендуем ознакомиться с руководством ниже:
+    ''')
+
+def action_print():
+
+    print('''
+    Доступные действия:
+        1. получить список записей
+        2. создать новую запись в адресной книге
+        3. обновить запись
+        4. удалить запись
+        5. сохранить все на диск
+        6. выйти
+    ''')
+
+def seporator_print():
+
+    print('\n' + '*'*80 + '\n')
+
+def load_order():
+
+    if os.path.exists('address-book.pickle'):
+        with open('address-book.pickle', 'rb') as file:
+            if not os.stat('address-book.pickle').st_size ==0:
+                address_book = pickle.load(file)
+    else:
+        address_book = [
+                    {
+                        'id':'№',
+                        'name':'ИМЯ',
+                        'familyname':'ФАМИЛИЯ',
+                        'lastname':'ОТЧЕСТВО',
+                        'address':'АДРЕС',
+                        'phone':'ТЕЛЕФОН'
+                    }
+                ]
+
+    return address_book
 
 def get_order(address_book):
     for person in address_book:
@@ -33,7 +82,7 @@ def create_order(address_book):
 def update_order(address_book):
     whom = input('Введите id для обновления: ')
     for person in address_book:
-        if (whom == person.id):
+        if (whom == person['id']):
             man = person
         else:
             print("\n Человека с таким id не существует!")
@@ -42,48 +91,121 @@ def update_order(address_book):
 
     if (what.lower() == 'name' or what.lower() == 'имя'):
         name = input('Введите имя: ')
-        man['name'] = name
+        man['name'] = name.capitalize()
         print('Данные успешно измененны', man)
     elif (what.lower() == 'familyname' or what.lower() == 'фамилия'):
         familyname = input('Введите фамилию: ')
-        man['familyname'] = familyname
+        man['familyname'] = familyname.capitalize()
         print('Данные успешно измененны', man)
     elif (what.lower() == 'lastname' or what.lower() == 'отчество'):
         lastname = input('Введите отчество: ')
-        man['lastname'] = lastname
+        man['lastname'] = lastname.capitalize()
         print('Данные успешно измененны', man)
     elif (what.lower() == 'address' or what.lower() == 'адрес'):
         address = input('Введите адрес: ')
-        man['address'] = address
+        man['address'] = address.title()
         print('Данные успешно измененны', man)
     elif (what.lower() == 'phone' or what.lower() == 'телефон'):
-        phone = input('Введите адрес: ')
-        man['phone'] = phone
+        phone = input('Введите телефон: ')
+        phone_re = phone[0]+'-(' + phone[1:4] + ')-'+phone[4:7] + '-' + phone[7:9] + '-' + phone[9:11]
+        man['phone'] = phone_re
         print('Данные успешно измененны', man)
     else:
         print('WTF?!')
 
+def delete_order(address_book):
+    whom = input('Введите id для удаления: ')
+    for person in address_book:
+        if (whom == person['id']):
+            idx = address_book.index(person)
+            del address_book[idx]
 
+    print('\nЗапись удалена\n')
+
+def save(address_book):
+    # pickle
+    with open('address-book.pickle', 'wb') as file:
+        pickle.dump(address_book, file)
+
+    # file
+    try:
+        f = open('adress-book.txt', 'w')
+        for address in address_book:
+            person = address['id'] + '\t' + address['name'] + '\t' + address['familyname'] + '\t' + address['lastname'] + '\t' + address['address'] + '\t' + address['phone'] + '\n'
+            f.write(person)
+    except KeyboardInterrupt:
+        print('\nЗапись не завершена\n')
+
+    finally:
+        f.close()
+
+    # excel
+    wb = openpyxl.Workbook()
+    sheet = wb.create_sheet(index=0, title='Address Book')
+    sheet['A1'] = '№'
+    sheet['B1'] = 'Имя'
+    sheet['C1'] = 'Фамилия'
+    sheet['D1'] = 'Отчество'
+    sheet['E1'] = 'Адрес'
+    sheet['F1'] = 'Телефон'
+
+    
+    for i in ['A', 'B', 'C', 'D', 'E', 'F']:
+        for j in range(1, 2001):
+            sheet[i+str(j)].alignment = Alignment(horizontal='center')
+
+
+    wb.save('address_book.xlsx')
+
+
+    print('\nДанные успешно записаны\n')
+
+def exit():
+    print('\nДо встречи!\n')
+    sys.exit(0)
+
+
+def main():
+    
+    address_book = load_order()
+    IS_LOOP = True
+
+    while IS_LOOP:
+
+        hello_message()
+        action_print()
+        seporator_print()
+
+        actions = input('Выберите номер действия: ')
+
+        if (actions == '1'):
+            if address_book:
+                get_order(address_book)
+            else:
+                print('\nЕще нет записей в адресной книге\n')
+
+        elif (actions == '2'):
+            create_order(address_book)
+
+        elif (actions == '3'):
+            if address_book:
+                update_order(address_book)
+            else:
+                print('\nЕще нет записей в адресной книге\n')
+            
+        elif (actions == '4'):
+            delete_order(address_book)
+
+        elif (actions == '5'):
+            save(address_book)
+
+        elif (actions == '6'):
+            exit()
+
+        else:
+            print('\nВы ввели некорректный номер действия\n')
+        
 
 if __name__ == '__main__':
 
-    address_book = []
-
-    print('''
-    Вас приветствует AdBook - портативная адрессная книга.
-    Рекомендуем ознакомиться с руководством ниже:
-        1. получить список записей
-        2. создать новую запись в адресной книге
-        3. обновить запись
-        4. удалить запись
-        5. сохранить все на диск
-        6. выйти
-    ''')
-
-    create_order(address_book)
-
-    get_order(address_book)
-
-    update_order(address_book)
-
-    print(address_book)
+    main()
