@@ -144,13 +144,11 @@ class Book:
 
         # pickle
         with open('log' + os.sep + 'address-book.pickle', 'wb') as file:
-        with open('../log' + os.sep + 'address-book.pickle', 'wb') as file:
             pickle.dump(address_book, file)
 
         # file
         try:
             f = open('log' + os.sep + 'address-book.txt', 'w')
-            f = open('../log' + os.sep + 'address-book.txt', 'w')
             for address in address_book:
                 person = address['id'] + '\t' + address['name'] + '\t' + address['familyname'] + '\t' + address[
                     'lastname'] + '\t' + address['address'] + '\t' + address['phone'] + '\n'
@@ -176,7 +174,6 @@ class Book:
                 sheet[i + str(j)].alignment = Alignment(horizontal='center')
 
         wb.save('log' + os.sep + 'address-book.xlsx')
-        wb.save('../log' + os.sep + 'address-book.xlsx')
 
         print('\nДанные успешно записаны\n')
 
