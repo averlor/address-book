@@ -6,8 +6,6 @@ from openpyxl.styles import Alignment
 
 class Person:
 
-    id = 0
-
     def __init__(self, id, name, familyname, lastname, address, phone):
         self.id = id
         self.name = name
@@ -42,9 +40,9 @@ def seporator_print():
 
 def load_order():
 
-    if os.path.exists('address-book.pickle'):
-        with open('address-book.pickle', 'rb') as file:
-            if not os.stat('address-book.pickle').st_size ==0:
+    if os.path.exists('log'+os.sep+'address-book.pickle'):
+        with open('log'+os.sep+'address-book.pickle', 'rb') as file:
+            if not os.stat('log'+os.sep+'address-book.pickle').st_size ==0:
                 address_book = pickle.load(file)
     else:
         address_book = [
@@ -61,6 +59,7 @@ def load_order():
     return address_book
 
 def get_order(address_book):
+    
     for person in address_book:
         pers = person['id'] + '    ' + person['name'] + '    ' + person['familyname'] + '    ' + person['lastname'] + '    ' + person['address'] + '    ' + person['phone']
         print('{:^100}'.format(str(pers)))
@@ -73,14 +72,19 @@ def create_order(address_book):
     phone = input('Введите телефон человека(89009998877): ')
     phone_re = phone[0]+'-(' + phone[1:4] + ')-'+phone[4:7] + '-' + phone[7:9] + '-' + phone[9:11]
 
-    Person.id += 1
-    ID = str(Person.id)
+    if (len(address_book) > 1):
+        ID = int(address_book[-1]['id']) + 1
+    else:
+        ID = 1
+
+    ID = str(ID)
 
     p = Person(ID, name, familyname, lastname, address, phone_re)
     address_book.append(p.__dict__)
 
 def update_order(address_book):
     whom = input('Введите id для обновления: ')
+    
     for person in address_book:
         if (whom == person['id']):
             man = person
