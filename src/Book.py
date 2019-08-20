@@ -1,6 +1,8 @@
 import sys
 import os
 import pickle
+import datetime
+
 import openpyxl
 from openpyxl.styles import Alignment
 
@@ -35,6 +37,7 @@ class Book:
 
         print('\n' + '*' * 80 + '\n')
 
+    # FIXME: added connect to db
     def load_order(self):
 
         '''Loader data'''
@@ -51,7 +54,9 @@ class Book:
                     'familyname': 'ФАМИЛИЯ',
                     'lastname': 'ОТЧЕСТВО',
                     'address': 'АДРЕС',
-                    'phone': 'ТЕЛЕФОН'
+                    'phone': 'ТЕЛЕФОН',
+                    'datecreate': 'Дата создания',
+                    'datemodify': 'Дата обновления'
                 }
             ]
 
@@ -63,7 +68,8 @@ class Book:
 
         for person in address_book:
             pers = person['id'] + '    ' + person['name'] + '    ' + person['familyname'] + '    ' + person[
-                'lastname'] + '    ' + person['address'] + '    ' + person['phone']
+                'lastname'] + '    ' + person['address'] + '    ' + person[
+                'phone'] + '    ' +  person['datecreate'] + '    ' + person['datemodify']
             print('{:^100}'.format(str(pers)))
 
     def create_order(self, address_book):
@@ -76,6 +82,8 @@ class Book:
         address = input('Введите адрес человека: ').title()
         phone = input('Введите телефон человека(89009998877): ')
         phone_re = phone[0] + '-(' + phone[1:4] + ')-' + phone[4:7] + '-' + phone[7:9] + '-' + phone[9:11]
+        date_create = datetime.datetime.now().strftime("%A, %d. %B %Y %I:%M%p")
+        date_modify = datetime.datetime.now().strftime("%A, %d. %B %Y %I:%M%p")
 
         if (len(address_book) > 1):
             ID = int(address_book[-1]['id']) + 1
@@ -84,7 +92,8 @@ class Book:
 
         ID = str(ID)
 
-        p = Person(ID, name, familyname, lastname, address, phone_re)
+        p = Person(ID, name, familyname, lastname, address, phone_re,
+                   date_create, date_modify)
         address_book.append(p.__dict__)
 
     def update_order(self, address_book):
@@ -96,34 +105,44 @@ class Book:
         for person in address_book:
             if (whom == person['id']):
                 man = person
+
+                what = input('Что будем менят?(имя, фамилия, отчество, адрес, телефон): ')
+
+                if (what.lower() == 'name' or what.lower() == 'имя'):
+                    name = input('Введите имя: ')
+                    man['name'] = name.capitalize()
+                    man['datemodify'] = datetime.datetime.now().strftime("%A, %d. %B %Y %I:%M%p")
+                    print('Данные успешно измененны', man)
+                elif (what.lower() == 'familyname' or what.lower() == 'фамилия'):
+                    familyname = input('Введите фамилию: ')
+                    man['familyname'] = familyname.capitalize()
+                    man['datemodify'] = datetime.datetime.now().strftime(
+                        "%A, %d. %B %Y %I:%M%p")
+                    print('Данные успешно измененны', man)
+                elif (what.lower() == 'lastname' or what.lower() == 'отчество'):
+                    lastname = input('Введите отчество: ')
+                    man['lastname'] = lastname.capitalize()
+                    man['datemodify'] = datetime.datetime.now().strftime(
+                        "%A, %d. %B %Y %I:%M%p")
+                    print('Данные успешно измененны', man)
+                elif (what.lower() == 'address' or what.lower() == 'адрес'):
+                    address = input('Введите адрес: ')
+                    man['address'] = address.title()
+                    man['datemodify'] = datetime.datetime.now().strftime(
+                        "%A, %d. %B %Y %I:%M%p")
+                    print('Данные успешно измененны', man)
+                elif (what.lower() == 'phone' or what.lower() == 'телефон'):
+                    phone = input('Введите телефон: ')
+                    phone_re = phone[0] + '-(' + phone[1:4] + ')-' + phone[4:7] + '-' + phone[7:9] + '-' + phone[9:11]
+                    man['phone'] = phone_re
+                    man['datemodify'] = datetime.datetime.now().strftime(
+                        "%A, %d. %B %Y %I:%M%p")
+                    print('Данные успешно измененны', man)
+                else:
+                    print('WTF?!')
+
             else:
                 print("\n Человека с таким id не существует!")
-
-        what = input('Что будем менят?(имя, фамилия, отчество, адрес, телефон): ')
-
-        if (what.lower() == 'name' or what.lower() == 'имя'):
-            name = input('Введите имя: ')
-            man['name'] = name.capitalize()
-            print('Данные успешно измененны', man)
-        elif (what.lower() == 'familyname' or what.lower() == 'фамилия'):
-            familyname = input('Введите фамилию: ')
-            man['familyname'] = familyname.capitalize()
-            print('Данные успешно измененны', man)
-        elif (what.lower() == 'lastname' or what.lower() == 'отчество'):
-            lastname = input('Введите отчество: ')
-            man['lastname'] = lastname.capitalize()
-            print('Данные успешно измененны', man)
-        elif (what.lower() == 'address' or what.lower() == 'адрес'):
-            address = input('Введите адрес: ')
-            man['address'] = address.title()
-            print('Данные успешно измененны', man)
-        elif (what.lower() == 'phone' or what.lower() == 'телефон'):
-            phone = input('Введите телефон: ')
-            phone_re = phone[0] + '-(' + phone[1:4] + ')-' + phone[4:7] + '-' + phone[7:9] + '-' + phone[9:11]
-            man['phone'] = phone_re
-            print('Данные успешно измененны', man)
-        else:
-            print('WTF?!')
 
     def delete_order(self, address_book):
 
@@ -151,7 +170,10 @@ class Book:
             f = open('log' + os.sep + 'address-book.txt', 'w')
             for address in address_book:
                 person = address['id'] + '\t' + address['name'] + '\t' + address['familyname'] + '\t' + address[
-                    'lastname'] + '\t' + address['address'] + '\t' + address['phone'] + '\n'
+                    'lastname'] + '\t' + address['address'] + '\t' + address[
+                    'phone'] + '\t\t' + address['datecreate'] + '\t\t' + \
+                         address[
+                    'datemodify'] + '\n'
                 f.write(person)
         except KeyboardInterrupt:
             print('\nЗапись не завершена\n')
@@ -168,6 +190,8 @@ class Book:
         sheet['D1'] = 'Отчество'
         sheet['E1'] = 'Адрес'
         sheet['F1'] = 'Телефон'
+        sheet['G1'] = 'Дата создания'
+        sheet['H1'] = 'Дата обновления'
 
         for i in ['A', 'B', 'C', 'D', 'E', 'F']:
             for j in range(1, 2001):
