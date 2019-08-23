@@ -2,6 +2,7 @@ import sys
 import os
 import pickle
 import datetime
+import sqlite3 as db
 
 import openpyxl
 from openpyxl.styles import Alignment
@@ -42,23 +43,34 @@ class Book:
 
         '''Loader data'''
 
-        if os.path.exists('log' + os.sep + 'address-book.pickle'):
-            with open('log' + os.sep + 'address-book.pickle', 'rb') as file:
-                if not os.stat('log' + os.sep + 'address-book.pickle').st_size == 0:
-                    address_book = pickle.load(file)
-        else:
-            address_book = [
-                {
-                    'id': '№',
-                    'name': 'ИМЯ',
-                    'familyname': 'ФАМИЛИЯ',
-                    'lastname': 'ОТЧЕСТВО',
-                    'address': 'АДРЕС',
-                    'phone': 'ТЕЛЕФОН',
-                    'datecreate': 'Дата создания',
-                    'datemodify': 'Дата обновления'
-                }
-            ]
+        conn = db.connect('db' + os.sep + 'address_book.db')
+        cursor = conn.cursor()
+
+        sql = "SELECT * FROM adress_book"
+        cursor.execute(sql)
+
+        address_book = cursor.fetchall()
+        print(type(address_book))
+
+        if (len(address_book) == 0):
+
+            if os.path.exists('log' + os.sep + 'address-book.pickle'):
+                with open('log' + os.sep + 'address-book.pickle', 'rb') as file:
+                    if not os.stat('log' + os.sep + 'address-book.pickle').st_size == 0:
+                        address_book = pickle.load(file)
+            else:
+                address_book = [
+                    {
+                        'id': '№',
+                        'name': 'ИМЯ',
+                        'familyname': 'ФАМИЛИЯ',
+                        'lastname': 'ОТЧЕСТВО',
+                        'address': 'АДРЕС',
+                        'phone': 'ТЕЛЕФОН',
+                        'datecreate': 'Дата создания',
+                        'datemodify': 'Дата обновления'
+                    }
+                ]
 
         return address_book
 
