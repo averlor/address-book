@@ -7,6 +7,7 @@ def main():
 
     book = Book()
     address_book = book.load_order()
+
     IS_LOOP = True
 
     while IS_LOOP:
