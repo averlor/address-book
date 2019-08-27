@@ -6,9 +6,9 @@
 
 <p align="center">
   <a href="#" target="_blank">
-    <img src="public/demo.png">
+    <img src="img/view.png">
     <br>
-   
+
   </a>
 </p>
 
