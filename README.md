@@ -4,10 +4,13 @@
 *приложение сугубо консольное, возможно, в будущем будет переведено на
 веб-платформу или десктоп*
 
-<div style="text-align:center">
-    <img src="img/view.png">
-    <a href="#"></a>
-</div>
+<p align="center">
+  <a href="#" target="_blank">
+    <img src="public/demo.png">
+    <br>
+   
+  </a>
+</p>
 
 ***
 
