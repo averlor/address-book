@@ -4,12 +4,12 @@ import pickle
 import datetime
 import sqlite3 as db
 
-import openpyxl
-from openpyxl.styles import Alignment
-
 from Person import Person
 
 class Book:
+
+    params = ['id', 'name', 'familyname', 'lastname', 'address', 'phone', 'datecreate', 'datemodify']
+    address_book_for_bd = []
 
     def hello_message(self):
 
@@ -30,7 +30,7 @@ class Book:
                 2. создать новую запись в адресной книге
                 3. обновить запись
                 4. удалить запись
-                5. сохранить все на диск
+                5. сохранить все на диск(рекомендуется)
                 6. выйти
             ''')
 
@@ -38,7 +38,6 @@ class Book:
 
         print('\n' + '*' * 80 + '\n')
 
-    # FIXME: Refine processing when there is no connection to the database
     def load_order(self):
 
         '''Loader data'''
@@ -93,16 +92,18 @@ class Book:
 
         # print(address_book)
 
-        params = ['id', 'name', 'familyname', 'lastname', 'address', 'phone', 'datecreate', 'datemodify']
         for person in address_book:
 
             if isinstance(person, tuple):
-                person = dict(zip(params, list(person)))
+                person = dict(zip(self.params, list(person)))
 
             pers = str(person['id']) + '    ' + person['name'] + '    ' + person['familyname'] + '    ' + person[
                 'lastname'] + '    ' + person['address'] + '    ' + person[
                 'phone'] + '    ' + person['datecreate'] + '    ' + person['datemodify']
             print('{:^100}'.format(str(pers)))
+
+    def find(self, address_book):
+        pass
 
     def create_order(self, address_book):
 
@@ -114,27 +115,40 @@ class Book:
         address = input('Введите адрес человека: ').title()
         phone = input('Введите телефон человека(89009998877): ')
         phone_re = phone[0] + '-(' + phone[1:4] + ')-' + phone[4:7] + '-' + phone[7:9] + '-' + phone[9:11]
-        date_create = datetime.datetime.now().strftime("%A, %d. %B %Y %I:%M%p")
-        date_modify = datetime.datetime.now().strftime("%A, %d. %B %Y %I:%M%p")
+        date_create = datetime.datetime.now().strftime("%d-%m-%Y")
+        date_modify = datetime.datetime.now().strftime("%d-%m-%Y")
 
-        if (len(address_book) > 1):
-            ID = int(address_book[-1]['id']) + 1
+        if isinstance(address_book[-1], tuple):
+            last_item = dict(zip(self.params, list(address_book[-1])))
+            ID = last_item['id'] + 1
+
         else:
-            ID = 1
-
-        ID = str(ID)
+            if (len(address_book) > 1):
+                ID = int(address_book[-1]['id']) + 1
+            else:
+                ID = 1
 
         p = Person(ID, name, familyname, lastname, address, phone_re,
                    date_create, date_modify)
         address_book.append(p.__dict__)
 
+        self.address_book_for_bd.append((p.id, p.name, p.familyname, p.lastname, p.address, p.phone, p.datecreate,
+                                    p.datemodify))
+
+    # FIXME: fix error
     def update_order(self, address_book):
 
         '''Update order from address book'''
 
-        whom = input('Введите id для обновления: ')
+        whom = int(input('Введите id для обновления: '))
 
         for person in address_book:
+
+            if isinstance(person, tuple):
+                person = dict(zip(self.params, list(person)))
+
+            print(person)
+
             if (whom == person['id']):
                 man = person
 
@@ -176,62 +190,72 @@ class Book:
             else:
                 print("\n Человека с таким id не существует!")
 
+    # FIXME: fix error
     def delete_order(self, address_book):
 
         '''Delete order from address book'''
 
-        whom = input('Введите id для удаления: ')
+        whom = int(input('Введите id для удаления: '))
         for person in address_book:
+
+            if isinstance(person, tuple):
+                person = dict(zip(self.params, list(person)))
+
             if (whom == person['id']):
+
+                try:
+                    conn = db.connect('db' + os.sep + 'address_book.db')
+                    cursor = conn.cursor()
+
+                    sql = "DELETE FROM adress_book WHERE id = ?"
+                    try:
+                        cursor.execute(sql, tuple(whom))
+                        conn.commit()
+                    except db.Error as err:
+                        print(err)
+
+                    address_book = cursor.fetchall()
+
+                except db.Error as err:
+                    print(err)
+                    if conn:
+                        conn.rollback()
+
+                finally:
+                    if conn:
+                        conn.close()
+
                 idx = address_book.index(person)
                 del address_book[idx]
 
         print('\nЗапись удалена\n')
 
-    # FIXME: added connect to db
     def save(self, address_book):
 
-        '''Save changes'''
+        try:
+            conn = db.connect('db' + os.sep + 'address_book.db')
+            cursor = conn.cursor()
+
+            sql = "INSERT INTO adress_book VALUES(?,?,?,?,?,?,?,?)"
+            try:
+                cursor.executemany(sql, self.address_book_for_bd)
+                conn.commit()
+            except db.Error as err:
+                print(err)
+                if conn:
+                    conn.rollback()
+
+        except db.Error as err:
+            print("Ошибка при работе с БД...")
+            print(sys.exc_info()[1])
+
+        finally:
+            if conn:
+                conn.close()
 
         # pickle
         with open('log' + os.sep + 'address-book.pickle', 'wb') as file:
             pickle.dump(address_book, file)
-
-        # file
-        try:
-            f = open('log' + os.sep + 'address-book.txt', 'w')
-            for address in address_book:
-                person = address['id'] + '\t' + address['name'] + '\t' + address['familyname'] + '\t' + address[
-                    'lastname'] + '\t' + address['address'] + '\t' + address[
-                    'phone'] + '\t\t' + address['datecreate'] + '\t\t' + \
-                         address[
-                    'datemodify'] + '\n'
-                f.write(person)
-        except KeyboardInterrupt:
-            print('\nЗапись не завершена\n')
-
-        finally:
-            f.close()
-
-        # excel
-        wb = openpyxl.Workbook()
-        sheet = wb.create_sheet(index=0, title='Address Book')
-        sheet['A1'] = '№'
-        sheet['B1'] = 'Имя'
-        sheet['C1'] = 'Фамилия'
-        sheet['D1'] = 'Отчество'
-        sheet['E1'] = 'Адрес'
-        sheet['F1'] = 'Телефон'
-        sheet['G1'] = 'Дата создания'
-        sheet['H1'] = 'Дата обновления'
-
-        for i in ['A', 'B', 'C', 'D', 'E', 'F']:
-            for j in range(1, 2001):
-                sheet[i + str(j)].alignment = Alignment(horizontal='center')
-
-        wb.save('log' + os.sep + 'address-book.xlsx')
-
-        print('\nДанные успешно записаны\n')
 
     def exit(self):
 
