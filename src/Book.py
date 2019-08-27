@@ -38,39 +38,52 @@ class Book:
 
         print('\n' + '*' * 80 + '\n')
 
-    # FIXME: added connect to db
+    # FIXME: Refine processing when there is no connection to the database
     def load_order(self):
 
         '''Loader data'''
 
-        conn = db.connect('db' + os.sep + 'address_book.db')
-        cursor = conn.cursor()
+        conn = None
 
-        sql = "SELECT * FROM adress_book"
-        cursor.execute(sql)
+        try:
+            conn = db.connect('db' + os.sep + 'address_book.db')
+            cursor = conn.cursor()
 
-        address_book = cursor.fetchall()
-        print(type(address_book))
+            sql = "SELECT * FROM adress_book"
+            try:
+                cursor.execute(sql)
+            except db.Error as err:
+                print(err)
 
-        if (len(address_book) == 0):
+            address_book = cursor.fetchall()
 
-            if os.path.exists('log' + os.sep + 'address-book.pickle'):
-                with open('log' + os.sep + 'address-book.pickle', 'rb') as file:
-                    if not os.stat('log' + os.sep + 'address-book.pickle').st_size == 0:
-                        address_book = pickle.load(file)
+        except db.Error as err:
+            print("Ошибка при работе с БД...")
+            print(sys.exc_info()[1])
+
+        finally:
+            if conn:
+                conn.close()
+
             else:
-                address_book = [
-                    {
-                        'id': '№',
-                        'name': 'ИМЯ',
-                        'familyname': 'ФАМИЛИЯ',
-                        'lastname': 'ОТЧЕСТВО',
-                        'address': 'АДРЕС',
-                        'phone': 'ТЕЛЕФОН',
-                        'datecreate': 'Дата создания',
-                        'datemodify': 'Дата обновления'
-                    }
-                ]
+
+                if os.path.exists('log' + os.sep + 'address-book.pickle'):
+                    with open('log' + os.sep + 'address-book.pickle', 'rb') as file:
+                        if not os.stat('log' + os.sep + 'address-book.pickle').st_size == 0:
+                            address_book = pickle.load(file)
+                else:
+                    address_book = [
+                        {
+                            'id': '№',
+                            'name': 'ИМЯ',
+                            'familyname': 'ФАМИЛИЯ',
+                            'lastname': 'ОТЧЕСТВО',
+                            'address': 'АДРЕС',
+                            'phone': 'ТЕЛЕФОН',
+                            'datecreate': 'Дата создания',
+                            'datemodify': 'Дата обновления'
+                        }
+                    ]
 
         return address_book
 
@@ -78,10 +91,17 @@ class Book:
 
         '''Get list of order'''
 
+        # print(address_book)
+
+        params = ['id', 'name', 'familyname', 'lastname', 'address', 'phone', 'datecreate', 'datemodify']
         for person in address_book:
-            pers = person['id'] + '    ' + person['name'] + '    ' + person['familyname'] + '    ' + person[
+
+            if isinstance(person, tuple):
+                person = dict(zip(params, list(person)))
+
+            pers = str(person['id']) + '    ' + person['name'] + '    ' + person['familyname'] + '    ' + person[
                 'lastname'] + '    ' + person['address'] + '    ' + person[
-                'phone'] + '    ' +  person['datecreate'] + '    ' + person['datemodify']
+                'phone'] + '    ' + person['datecreate'] + '    ' + person['datemodify']
             print('{:^100}'.format(str(pers)))
 
     def create_order(self, address_book):
