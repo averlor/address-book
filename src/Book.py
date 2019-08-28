@@ -13,7 +13,9 @@ class Book:
 
     def hello_message(self):
 
-        '''Hello message'''
+        '''
+        Hello message
+        '''
 
         print('''
             Вас приветствует AdBook - портативная адрессная книга.
@@ -22,7 +24,9 @@ class Book:
 
     def action_message(self):
 
-        '''Message of actions'''
+        '''
+        Message of actions
+        '''
 
         print('''
             Доступные действия:
@@ -30,7 +34,7 @@ class Book:
                 2. создать новую запись в адресной книге
                 3. обновить запись
                 4. удалить запись
-                5. сохранить все на диск(рекомендуется)
+                5. сохранить изменения
                 6. выйти
             ''')
 
@@ -40,7 +44,9 @@ class Book:
 
     def load_order(self):
 
-        '''Loader data'''
+        '''
+        Loader data from database or load data from "file.pickle" when connection is bad
+        '''
 
         conn = None
 
@@ -57,8 +63,7 @@ class Book:
             address_book = cursor.fetchall()
 
         except db.Error as err:
-            print("Ошибка при работе с БД...")
-            print(sys.exc_info()[1])
+            print("Ошибка при работе с БД:\n", sys.exc_info()[1])
 
         finally:
             if conn:
@@ -88,9 +93,11 @@ class Book:
 
     def get_order(self, address_book):
 
-        '''Get list of order'''
+        '''
+        Get list of data from "address_book" and output in console
 
-        # print(address_book)
+        :param address_book: list of contacts
+        '''
 
         for person in address_book:
 
@@ -103,11 +110,22 @@ class Book:
             print('{:^100}'.format(str(pers)))
 
     def find(self, address_book):
+
+        '''
+        Find contact by name or family name
+
+        :param address_book: list of contacts
+        '''
+
         pass
 
     def create_order(self, address_book):
 
-        '''Create order in address book'''
+        '''
+        Create new item in "address_book"
+
+        :param address_book: list of contacts
+        '''
 
         name = input('Введите имя человека: ').capitalize()
         familyname = input('Введите фамилию человека: ').capitalize()
@@ -138,7 +156,11 @@ class Book:
     # FIXME: fix error
     def update_order(self, address_book):
 
-        '''Update order from address book'''
+        '''
+         Update item by id
+
+        :param address_book: list of contacts
+        '''
 
         whom = int(input('Введите id для обновления: '))
 
@@ -150,40 +172,39 @@ class Book:
             print(person)
 
             if (whom == person['id']):
-                man = person
 
                 what = input('Что будем менят?(имя, фамилия, отчество, адрес, телефон): ')
 
                 if (what.lower() == 'name' or what.lower() == 'имя'):
                     name = input('Введите имя: ')
-                    man['name'] = name.capitalize()
-                    man['datemodify'] = datetime.datetime.now().strftime("%A, %d. %B %Y %I:%M%p")
-                    print('Данные успешно измененны', man)
+                    person['name'] = name.capitalize()
+                    person['datemodify'] = datetime.datetime.now().strftime("%A, %d. %B %Y %I:%M%p")
+                    print('Данные успешно измененны', person)
                 elif (what.lower() == 'familyname' or what.lower() == 'фамилия'):
                     familyname = input('Введите фамилию: ')
-                    man['familyname'] = familyname.capitalize()
-                    man['datemodify'] = datetime.datetime.now().strftime(
+                    person['familyname'] = familyname.capitalize()
+                    person['datemodify'] = datetime.datetime.now().strftime(
                         "%A, %d. %B %Y %I:%M%p")
-                    print('Данные успешно измененны', man)
+                    print('Данные успешно измененны', person)
                 elif (what.lower() == 'lastname' or what.lower() == 'отчество'):
                     lastname = input('Введите отчество: ')
-                    man['lastname'] = lastname.capitalize()
-                    man['datemodify'] = datetime.datetime.now().strftime(
+                    person['lastname'] = lastname.capitalize()
+                    person['datemodify'] = datetime.datetime.now().strftime(
                         "%A, %d. %B %Y %I:%M%p")
-                    print('Данные успешно измененны', man)
+                    print('Данные успешно измененны', person)
                 elif (what.lower() == 'address' or what.lower() == 'адрес'):
                     address = input('Введите адрес: ')
-                    man['address'] = address.title()
-                    man['datemodify'] = datetime.datetime.now().strftime(
+                    person['address'] = address.title()
+                    person['datemodify'] = datetime.datetime.now().strftime(
                         "%A, %d. %B %Y %I:%M%p")
-                    print('Данные успешно измененны', man)
+                    print('Данные успешно измененны', person)
                 elif (what.lower() == 'phone' or what.lower() == 'телефон'):
                     phone = input('Введите телефон: ')
                     phone_re = phone[0] + '-(' + phone[1:4] + ')-' + phone[4:7] + '-' + phone[7:9] + '-' + phone[9:11]
-                    man['phone'] = phone_re
-                    man['datemodify'] = datetime.datetime.now().strftime(
+                    person['phone'] = phone_re
+                    person['datemodify'] = datetime.datetime.now().strftime(
                         "%A, %d. %B %Y %I:%M%p")
-                    print('Данные успешно измененны', man)
+                    print('Данные успешно измененны', person)
                 else:
                     print('WTF?!')
 
@@ -193,7 +214,11 @@ class Book:
     # FIXME: fix error
     def delete_order(self, address_book):
 
-        '''Delete order from address book'''
+        '''
+        Delete item by id
+
+        :param address_book: list of contacts
+        '''
 
         whom = int(input('Введите id для удаления: '))
         for person in address_book:
@@ -232,13 +257,19 @@ class Book:
 
     def save(self, address_book):
 
+        '''
+        Save change: insert, update or delete in database or "file.pickle"
+
+        :param address_book:
+        '''
+
         try:
             conn = db.connect('db' + os.sep + 'address_book.db')
             cursor = conn.cursor()
 
             sql = "INSERT INTO adress_book VALUES(?,?,?,?,?,?,?,?)"
             try:
-                cursor.executemany(sql, self.address_book_for_bd)
+                cursor.executepersony(sql, self.address_book_for_bd)
                 conn.commit()
             except db.Error as err:
                 print(err)
@@ -246,8 +277,7 @@ class Book:
                     conn.rollback()
 
         except db.Error as err:
-            print("Ошибка при работе с БД...")
-            print(sys.exc_info()[1])
+            print("Ошибка при работе с БД:\n", sys.exc_info()[1])
 
         finally:
             if conn:
@@ -259,7 +289,10 @@ class Book:
 
     def exit(self):
 
-        '''Close programm'''
+        '''
+        close application
+        '''
 
+        IS_LOOP = False
         print('\nДо встречи!\n')
         sys.exit(0)
